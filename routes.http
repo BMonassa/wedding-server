@@ -1,0 +1,28 @@
+POST http://localhost:3333/videoss
+Content-type: application/json
+
+{
+  "title": "Video 01",
+  "name": "Esse é o primeiro video",
+  "price": 180
+}
+
+###
+
+GET http://localhost:3333/videos
+
+###
+
+PUT http://localhost:3333/videos/20480641-3109-4b3a-a6e3-74969b3685fb
+Content-type: application/json
+
+{
+  "title": "Video 02",
+  "name": "Esse é o segundo video",
+  "price": 180
+}
+
+###
+
+DELETE http://localhost:3333/videos/20480641-3109-4b3a-a6e3-74969b3685fb
+
