@@ -11,16 +11,16 @@ export class DatabasePostgres {
 
   async create(video) {
     const videoId = randomUUID()
-    const {title, name, price} = video
+    const {title, name, description, price} = video
 
-    await sql`insert into videos (id, title, name, price) VALUES (${videoId}, ${title}, ${name}, ${price})`
+    await sql`insert into videos (id, title, name, description, price) VALUES (${videoId}, ${title}, ${name}, ${description}, ${price})`
   }
     // ###
 
   async update(id, video) {
-    const { title, name, price } = video
+    const { title, name, description, price } = video
 
-    await sql`update videos set title = ${title}, name = ${name}, price = ${price} WHERE id = ${id}`
+    await sql`update videos set title = ${title}, name = ${name},description = ${description} ,price = ${price} WHERE id = ${id}`
   }
 
   async delete(id) {
