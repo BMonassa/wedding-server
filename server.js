@@ -22,7 +22,7 @@ const database = new DatabasePostgres();
 
 server.post('/create-checkout-session', async (request, reply) => {
 
-  const {title, name, price} = request.body
+  const {title, name, description, price} = request.body
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -72,12 +72,13 @@ server.post('/pagamento', async (request, reply) => {
 // #####
 server.post('/videos', async (request, reply) => {
 
-  const {title, name, price} = request.body
+  const {title, name, description, price} = request.body
 
   await database.create({
     title,
     name,
     price,
+    description
   })
 
   return reply.status(201).send()
@@ -94,12 +95,13 @@ server.get('/videos', async () => {
 
 server.put('/videos/:id', async (request, reply) => {
   const videoId  = request.params.id
-  const {title, name, price} = request.body
+  const {title, name, description, price} = request.body
 
   await database.update(videoId, {
     title,
     name,
     price,
+    description
   })
 
   return reply.status(204).send()
