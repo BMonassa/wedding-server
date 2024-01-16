@@ -118,6 +118,20 @@ server.delete('/videos/:id', async (request, reply) => {
 })
 // ###
 
+server.post('/github-webhook', async (request, reply) => {
+  // Aqui você pode lidar com a lógica do webhook do GitHub
+  // O corpo do webhook estará em request.body
+
+  const payload = request.body;
+
+  // Adicione a lógica de processamento do webhook aqui
+
+  console.log('Recebeu um webhook do GitHub:', payload);
+
+  // Responda com um código de status 200 para confirmar o recebimento do webhook
+  reply.code(200).send({ received: true });
+});
+
 server.listen({
   port: 3333,
 })
