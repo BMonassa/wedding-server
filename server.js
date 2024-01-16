@@ -122,47 +122,37 @@ server.delete('/videos/:id', async (request, reply) => {
 // ###
 
 server.get('/github-info', async (request, reply) => {
-  // Verifica se há informações do GitHub armazenadas
-  if (ultimaInformacaoGitHub) {
-    // Extrai várias informações do payload
-    const nomeDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.name : null;
-    const descricaoDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.description : null;
-    const branchPadrao = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.default_branch : null;
+  if (informacoesGitHub.length > 0) {
+    const todasInformacoes = informacoesGitHub.map(info => ({
+      nomeDoProjeto: info.repository ? info.repository.name : null,
+      descricaoDoProjeto: info.repository ? info.repository.description : null,
+      branchPadrao: info.repository ? info.repository.default_branch : null,
+      commits: info.commits ? info.commits.map(commit => ({
+        mensagem: commit.message,
+        autor: commit.author ? commit.author.name : null,
+        data: commit.timestamp,
+      })) : [],
+    }));
 
-    // Extrai informações de todos os commits
-    const commits = ultimaInformacaoGitHub.commits ? ultimaInformacaoGitHub.commits.map(commit => ({
-      mensagem: commit.message,
-      autor: commit.author ? commit.author.name : null,
-      data: commit.timestamp,
-    })) : [];
-
-    // Retorna todas as informações do GitHub como resposta
-    reply.code(200).send({
-      nomeDoProjeto,
-      descricaoDoProjeto,
-      branchPadrao,
-      commits,
-    });
+    reply.code(200).send(todasInformacoes);
   } else {
-    // Caso não haja informações, retorna uma resposta indicando que não há dados
     reply.code(404).send({ message: 'Nenhuma informação do GitHub disponível.' });
   }
 });
 
+
 server.post('/github-webhook', async (request, reply) => {
   const payload = request.body;
 
-  // Armazena a última informação do GitHub
-  ultimaInformacaoGitHub = payload;
+  // Adiciona a nova informação do GitHub à lista
+  informacoesGitHub.push(payload);
 
   console.log('Recebeu um webhook do GitHub:', payload);
 
   // Adiciona mais detalhes aos commits no payload
-  if (ultimaInformacaoGitHub.commits) {
-    ultimaInformacaoGitHub.commits = await Promise.all(ultimaInformacaoGitHub.commits.map(async commit => {
-      // Você pode fazer chamadas adicionais aqui para obter mais detalhes, se necessário
+  if (payload.commits) {
+    payload.commits = await Promise.all(payload.commits.map(async commit => {
       const commitDetalhado = await obterDetalhesDoCommit(commit.sha);
-
       return {
         mensagem: commit.message,
         autor: commit.author ? commit.author.name : null,
@@ -171,6 +161,10 @@ server.post('/github-webhook', async (request, reply) => {
       };
     }));
   }
+
+  reply.code(200).send({ received: true });
+});
+
 
   // Responda com um código de status 200 para confirmar o recebimento do webhook
   reply.code(200).send({ received: true });
