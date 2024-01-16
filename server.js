@@ -20,7 +20,7 @@ server.register(fastifyCors, {
 
 const database = new DatabasePostgres();
 
-let ultimaInformacaoGitHub = null; // Variável para armazenar a última informação do GitHub
+let informacoesGitHub = [];
 
 
 server.post('/create-checkout-session', async (request, reply) => {
