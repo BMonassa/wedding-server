@@ -128,14 +128,20 @@ server.get('/github-info', async (request, reply) => {
     const nomeDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.name : null;
     const descricaoDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.description : null;
     const branchPadrao = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.default_branch : null;
-    const autorDoCommit = ultimaInformacaoGitHub.commits && ultimaInformacaoGitHub.commits[0] ? ultimaInformacaoGitHub.commits[0].author.name : null;
 
-    // Retorna várias informações do GitHub como resposta
+    // Extrai informações de todos os commits
+    const commits = ultimaInformacaoGitHub.commits ? ultimaInformacaoGitHub.commits.map(commit => ({
+      mensagem: commit.message,
+      autor: commit.author ? commit.author.name : null,
+      data: commit.timestamp,
+    })) : [];
+
+    // Retorna todas as informações do GitHub como resposta
     reply.code(200).send({
       nomeDoProjeto,
       descricaoDoProjeto,
       branchPadrao,
-      autorDoCommit,
+      commits,
     });
   } else {
     // Caso não haja informações, retorna uma resposta indicando que não há dados
@@ -151,9 +157,36 @@ server.post('/github-webhook', async (request, reply) => {
 
   console.log('Recebeu um webhook do GitHub:', payload);
 
+  // Adiciona mais detalhes aos commits no payload
+  if (ultimaInformacaoGitHub.commits) {
+    ultimaInformacaoGitHub.commits = await Promise.all(ultimaInformacaoGitHub.commits.map(async commit => {
+      // Você pode fazer chamadas adicionais aqui para obter mais detalhes, se necessário
+      const commitDetalhado = await obterDetalhesDoCommit(commit.sha);
+
+      return {
+        mensagem: commit.message,
+        autor: commit.author ? commit.author.name : null,
+        data: commit.timestamp,
+        ...commitDetalhado,
+      };
+    }));
+  }
+
   // Responda com um código de status 200 para confirmar o recebimento do webhook
   reply.code(200).send({ received: true });
 });
+
+// Função para obter detalhes adicionais do commit
+async function obterDetalhesDoCommit(sha) {
+  // Exemplo: faça uma chamada à API do GitHub para obter mais detalhes sobre o commit usando o sha
+  // Substitua 'URL_DA_SUA_API_GITHUB' pela URL correta da API do GitHub
+  const response = await fetch(`URL_DA_SUA_API_GITHUB/commits/${sha}`);
+  const data = await response.json();
+
+  return {
+    detalhesAdicionais: data,
+  };
+}
 
 server.listen({
   port: 3333,
