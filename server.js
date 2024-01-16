@@ -124,8 +124,19 @@ server.delete('/videos/:id', async (request, reply) => {
 server.get('/github-info', async (request, reply) => {
   // Verifica se há informações do GitHub armazenadas
   if (ultimaInformacaoGitHub) {
-    // Retorna as informações como resposta
-    reply.code(200).send(ultimaInformacaoGitHub);
+    // Extrai várias informações do payload
+    const nomeDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.name : null;
+    const descricaoDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.description : null;
+    const branchPadrao = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.default_branch : null;
+    const autorDoCommit = ultimaInformacaoGitHub.commits && ultimaInformacaoGitHub.commits[0] ? ultimaInformacaoGitHub.commits[0].author.name : null;
+
+    // Retorna várias informações do GitHub como resposta
+    reply.code(200).send({
+      nomeDoProjeto,
+      descricaoDoProjeto,
+      branchPadrao,
+      autorDoCommit,
+    });
   } else {
     // Caso não haja informações, retorna uma resposta indicando que não há dados
     reply.code(404).send({ message: 'Nenhuma informação do GitHub disponível.' });
