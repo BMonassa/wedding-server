@@ -1,4 +1,3 @@
-
 import { DatabaseMemory } from './database-memory.js';
 // const { DatabasePostgres } = require('./database-postgres.js');
 // const database = new DatabaseMemory
@@ -20,21 +19,7 @@ server.register(fastifyCors, {
 
 const database = new DatabasePostgres();
 
-let informacoesGitHub = [];
-
-// Função para obter detalhes adicionais do commit
-async function obterDetalhesDoCommit(sha) {
-  // Exemplo: faça uma chamada à API do GitHub para obter mais detalhes sobre o commit usando o sha
-  // Substitua 'URL_DA_SUA_API_GITHUB' pela URL correta da API do GitHub
-  const response = await fetch(`URL_DA_SUA_API_GITHUB/commits/${sha}`);
-  const data = await response.json();
-
-  return {
-    detalhesAdicionais: data,
-  };
-}
-
-
+let ultimaInformacaoGitHub = null;
 
 server.post('/create-checkout-session', async (request, reply) => {
 
@@ -135,49 +120,39 @@ server.delete('/videos/:id', async (request, reply) => {
 // ###
 
 server.get('/github-info', async (request, reply) => {
-  if (informacoesGitHub.length > 0) {
-    const todasInformacoes = informacoesGitHub.map(info => ({
-      nomeDoProjeto: info.repository ? info.repository.name : null,
-      descricaoDoProjeto: info.repository ? info.repository.description : null,
-      branchPadrao: info.repository ? info.repository.default_branch : null,
-      commits: info.commits ? info.commits.map(commit => ({
-        mensagem: commit.message,
-        autor: commit.author ? commit.author.name : null,
-        data: commit.timestamp,
-      })) : [],
-    }));
+  // Verifica se há informações do GitHub armazenadas
+  if (ultimaInformacaoGitHub) {
+    // Extrai várias informações do payload
+    const nomeDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.name : null;
+    const descricaoDoProjeto = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.description : null;
+    const branchPadrao = ultimaInformacaoGitHub.repository ? ultimaInformacaoGitHub.repository.default_branch : null;
+    const autorDoCommit = ultimaInformacaoGitHub.commits && ultimaInformacaoGitHub.commits[0] ? ultimaInformacaoGitHub.commits[0].author.name : null;
 
-    reply.code(200).send(todasInformacoes);
+    // Retorna várias informações do GitHub como resposta
+    reply.code(200).send({
+      nomeDoProjeto,
+      descricaoDoProjeto,
+      branchPadrao,
+      autorDoCommit,
+    });
   } else {
+    // Caso não haja informações, retorna uma resposta indicando que não há dados
     reply.code(404).send({ message: 'Nenhuma informação do GitHub disponível.' });
   }
 });
 
+// Webhook do GitHub
 server.post('/github-webhook', async (request, reply) => {
   const payload = request.body;
 
-  // Adiciona a nova informação do GitHub à lista
-  informacoesGitHub.push(payload);
+  // Armazena a última informação do GitHub
+  ultimaInformacaoGitHub = payload;
 
   console.log('Recebeu um webhook do GitHub:', payload);
-
-  // Adiciona mais detalhes aos commits no payload usando a função obterDetalhesDoCommit
-  if (payload.commits) {
-    payload.commits = await Promise.all(payload.commits.map(async commit => {
-      const commitDetalhado = await obterDetalhesDoCommit(commit.sha);
-      return {
-        mensagem: commit.message,
-        autor: commit.author ? commit.author.name : null,
-        data: commit.timestamp,
-        ...commitDetalhado,
-      };
-    }));
-  }
 
   // Responda com um código de status 200 para confirmar o recebimento do webhook
   reply.code(200).send({ received: true });
 });
-
 
 server.listen({
   port: 3333,
