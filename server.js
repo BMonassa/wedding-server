@@ -165,23 +165,6 @@ server.post('/github-webhook', async (request, reply) => {
   reply.code(200).send({ received: true });
 });
 
-
-  // Responda com um código de status 200 para confirmar o recebimento do webhook
-  reply.code(200).send({ received: true });
-});
-
-// Função para obter detalhes adicionais do commit
-async function obterDetalhesDoCommit(sha) {
-  // Exemplo: faça uma chamada à API do GitHub para obter mais detalhes sobre o commit usando o sha
-  // Substitua 'URL_DA_SUA_API_GITHUB' pela URL correta da API do GitHub
-  const response = await fetch(`URL_DA_SUA_API_GITHUB/commits/${sha}`);
-  const data = await response.json();
-
-  return {
-    detalhesAdicionais: data,
-  };
-}
-
 server.listen({
   port: 3333,
 })
