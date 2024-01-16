@@ -22,6 +22,19 @@ const database = new DatabasePostgres();
 
 let informacoesGitHub = [];
 
+// Função para obter detalhes adicionais do commit
+async function obterDetalhesDoCommit(sha) {
+  // Exemplo: faça uma chamada à API do GitHub para obter mais detalhes sobre o commit usando o sha
+  // Substitua 'URL_DA_SUA_API_GITHUB' pela URL correta da API do GitHub
+  const response = await fetch(`URL_DA_SUA_API_GITHUB/commits/${sha}`);
+  const data = await response.json();
+
+  return {
+    detalhesAdicionais: data,
+  };
+}
+
+
 
 server.post('/create-checkout-session', async (request, reply) => {
 
@@ -140,7 +153,6 @@ server.get('/github-info', async (request, reply) => {
   }
 });
 
-
 server.post('/github-webhook', async (request, reply) => {
   const payload = request.body;
 
@@ -149,7 +161,7 @@ server.post('/github-webhook', async (request, reply) => {
 
   console.log('Recebeu um webhook do GitHub:', payload);
 
-  // Adiciona mais detalhes aos commits no payload
+  // Adiciona mais detalhes aos commits no payload usando a função obterDetalhesDoCommit
   if (payload.commits) {
     payload.commits = await Promise.all(payload.commits.map(async commit => {
       const commitDetalhado = await obterDetalhesDoCommit(commit.sha);
@@ -162,8 +174,10 @@ server.post('/github-webhook', async (request, reply) => {
     }));
   }
 
+  // Responda com um código de status 200 para confirmar o recebimento do webhook
   reply.code(200).send({ received: true });
 });
+
 
 server.listen({
   port: 3333,
