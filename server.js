@@ -20,6 +20,9 @@ server.register(fastifyCors, {
 
 const database = new DatabasePostgres();
 
+let ultimaInformacaoGitHub = null; // Variável para armazenar a última informação do GitHub
+
+
 server.post('/create-checkout-session', async (request, reply) => {
 
   const {title, name, description, price} = request.body
@@ -118,13 +121,22 @@ server.delete('/videos/:id', async (request, reply) => {
 })
 // ###
 
-server.post('/github-webhook', async (request, reply) => {
-  // Aqui você pode lidar com a lógica do webhook do GitHub
-  // O corpo do webhook estará em request.body
+server.get('/github-info', async (request, reply) => {
+  // Verifica se há informações do GitHub armazenadas
+  if (ultimaInformacaoGitHub) {
+    // Retorna as informações como resposta
+    reply.code(200).send(ultimaInformacaoGitHub);
+  } else {
+    // Caso não haja informações, retorna uma resposta indicando que não há dados
+    reply.code(404).send({ message: 'Nenhuma informação do GitHub disponível.' });
+  }
+});
 
+server.post('/github-webhook', async (request, reply) => {
   const payload = request.body;
 
-  // Adicione a lógica de processamento do webhook aqui
+  // Armazena a última informação do GitHub
+  ultimaInformacaoGitHub = payload;
 
   console.log('Recebeu um webhook do GitHub:', payload);
 
